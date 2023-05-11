@@ -186,7 +186,7 @@ func NewIntegration(cfg *Config, cb CmdBuilder, bb BackendBuilder) (*Runner, []T
 	}
 
 	if bb == nil {
-		bb = defaultBackendBuilder
+		bb = DefaultBackendBuilder
 	}
 
 	backend := bb.New(cfg)
@@ -443,7 +443,7 @@ func (krakendCmdBuilder) getEnviron(cfg *Config) []string {
 	return environ
 }
 
-var defaultBackendBuilder mockBackendBuilder
+var DefaultBackendBuilder mockBackendBuilder
 
 type mockBackendBuilder struct{}
 
@@ -457,7 +457,7 @@ func (mockBackendBuilder) New(cfg *Config) http.Server {
 	mux.HandleFunc("/redirect/", checkXForwardedFor(http.HandlerFunc(redirectEndpoint)))
 	mux.HandleFunc("/jwk/symmetric", http.HandlerFunc(symmetricJWKEndpoint))
 
-	return http.Server{
+	return http.Server{ // skipcq: GO-S2112
 		Addr:    fmt.Sprintf(":%v", cfg.getBackendPort()),
 		Handler: mux,
 	}
