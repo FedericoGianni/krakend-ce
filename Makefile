@@ -6,7 +6,8 @@
 
 BIN_NAME :=krakend
 OS := $(shell uname | tr '[:upper:]' '[:lower:]')
-VERSION := 2.3.2
+VERSION := 2.4.0
+SCHEMA_VERSION := $(shell echo "${VERSION}" | cut -d '.' -f 1,2)
 GIT_COMMIT := $(shell git rev-parse --short=7 HEAD)
 PKGNAME := krakend
 LICENSE := Apache 2.0
@@ -21,7 +22,7 @@ DOCKER_WDIR := /tmp/fpm
 DOCKER_FPM := devopsfaith/fpm
 GOLANG_VERSION := 1.20.4
 GLIBC_VERSION := $(shell sh find_glibc.sh)
-ALPINE_VERSION := 3.17
+ALPINE_VERSION := 3.18
 OS_TAG :=
 EXTRA_LDFLAGS :=
 
@@ -57,16 +58,17 @@ build:
 	@go get .
 	@go build -ldflags="-X github.com/luraproject/lura/v2/core.KrakendVersion=${VERSION} \
 	-X github.com/luraproject/lura/v2/core.GoVersion=${GOLANG_VERSION} \
-	-X github.com/luraproject/lura/v2/core.GlibcVersion=${GLIBC_VERSION} ${EXTRA_LDFLAGS}" \
+	-X github.com/luraproject/lura/v2/core.GlibcVersion=${GLIBC_VERSION} ${EXTRA_LDFLAGS} \
+	-X github.com/krakendio/krakend-cobra/v2.SchemaURL=https://www.krakend.io/schema/v${SCHEMA_VERSION}/krakend.json" \
 	-o ${BIN_NAME} ./cmd/krakend-ce
 	@echo "You can now use ./${BIN_NAME}"
 
 test: build
 	go test -v ./tests
 
-# Build KrakenD using docker (defaults to whatever the golang container uses)
+# Build KrakenD using docker (defaults to whatever the golang container uses)
 build_on_docker: docker-builder-linux
-	docker run --rm -it -v "${PWD}:/app" -w /app krakend/builder:${VERSION}-linux-generic make -e build
+	docker run --rm -it -v "${PWD}:/app" -w /app krakend/builder:${VERSION}-linux-generic sh -c "git config --global --add safe.directory /app && make -e build"
 
 # Build the container using the Dockerfile (alpine)
 docker:
